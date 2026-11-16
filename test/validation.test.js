@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { loginSchema, registerSchema } from '../server/validators/auth.js';
 import { createTaskSchema, statusSchema, taskQuerySchema } from '../server/validators/task.js';
+import { validate } from '../server/middleware/validate.js';
 
 test('registration normalizes email and enforces password strength', () => {
   const valid = registerSchema.parse({ name: '  Mir Saad  ', email: ' USER@Example.COM ', password: 'focus123' });
@@ -28,4 +29,15 @@ test('task input validates enums and converts ISO due dates', () => {
 test('task filters reject unexpected values', () => {
   assert.equal(taskQuerySchema.safeParse({ search: 'focus', status: 'PENDING' }).success, true);
   assert.equal(taskQuerySchema.safeParse({ priority: 'URGENT' }).success, false);
+});
+
+test('query validation supports the read-only Express 5 query getter', () => {
+  const request = {};
+  Object.defineProperty(request, 'query', {
+    get: () => ({ search: '  focus  ', status: 'PENDING' }),
+  });
+  let continued = false;
+  validate(taskQuerySchema, 'query')(request, {}, () => { continued = true; });
+  assert.equal(continued, true);
+  assert.deepEqual(request.validatedQuery, { search: 'focus', status: 'PENDING' });
 });

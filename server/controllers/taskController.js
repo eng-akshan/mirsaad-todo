@@ -12,7 +12,7 @@ const taskSelect = {
 };
 
 export async function listTasks(req, res) {
-  const { search, status, priority } = req.query;
+  const { search, status, priority } = req.validatedQuery;
   const tasks = await prisma.task.findMany({
     where: {
       userId: req.userId,

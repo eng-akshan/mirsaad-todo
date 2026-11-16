@@ -2,7 +2,9 @@ FROM node:22-alpine AS build
 WORKDIR /app
 COPY package*.json prisma.config.js ./
 COPY prisma ./prisma
-RUN npm ci
+# Coolify can expose NODE_ENV=production while building. The Vite compiler and
+# Tailwind pipeline are devDependencies, so force their installation here.
+RUN npm ci --include=dev
 RUN npx prisma generate
 COPY . .
 RUN npm run build
